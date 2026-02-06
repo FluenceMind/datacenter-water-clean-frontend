@@ -150,14 +150,20 @@ function History() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
-                          {analysis.treatment_train}
+                      {analysis.treatment_train && analysis.explanation ? (
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                            {analysis.treatment_train}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                            {analysis.explanation}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                          Not available for old records
                         </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
-                          {analysis.explanation}
-                        </Typography>
-                      </Box>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
