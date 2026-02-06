@@ -13,8 +13,13 @@ import {
   Alert,
   Chip,
   TablePagination,
+  TextField,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
-import { getAnalysisHistory } from '../services/api';
+import SaveIcon from '@mui/icons-material/Save';
+import EditIcon from '@mui/icons-material/Edit';
+import { getAnalysisHistory, updateAnalysisNotes } from '../services/api';
 
 function History() {
   const [analyses, setAnalyses] = useState([]);
@@ -23,6 +28,9 @@ function History() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
+  const [editingNotes, setEditingNotes] = useState({}); // Track which notes are being edited
+  const [notesValues, setNotesValues] = useState({}); // Track notes values
+  const [savingNotes, setSavingNotes] = useState({}); // Track which notes are being saved
 
   useEffect(() => {
     fetchHistory();
@@ -60,6 +68,37 @@ function History() {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
+  };
+
+  const handleEditNotes = (analysisId, currentNotes) => {
+    setEditingNotes({ ...editingNotes, [analysisId]: true });
+    setNotesValues({ ...notesValues, [analysisId]: currentNotes || '' });
+  };
+
+  const handleSaveNotes = async (analysisId) => {
+    setSavingNotes({ ...savingNotes, [analysisId]: true });
+    setError('');
+    
+    try {
+      await updateAnalysisNotes(analysisId, notesValues[analysisId] || '');
+      
+      // Update the local state
+      setAnalyses(analyses.map(analysis => 
+        analysis.id === analysisId 
+          ? { ...analysis, user_notes: notesValues[analysisId] }
+          : analysis
+      ));
+      
+      setEditingNotes({ ...editingNotes, [analysisId]: false });
+    } catch (err) {
+      setError('Failed to save notes');
+    } finally {
+      setSavingNotes({ ...savingNotes, [analysisId]: false });
+    }
+  };
+
+  const handleNotesChange = (analysisId, value) => {
+    setNotesValues({ ...notesValues, [analysisId]: value });
   };
 
   if (loading) {
@@ -102,6 +141,7 @@ function History() {
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="center">TDS (mg/L)</TableCell>
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="center">TDS Status</TableCell>
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Recommended Treatment</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Methods Actually Used</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -163,6 +203,61 @@ function History() {
                         <Typography variant="caption" color="text.secondary" fontStyle="italic">
                           Not available for old records
                         </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {editingNotes[analysis.id] ? (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                          <TextField
+                            multiline
+                            rows={2}
+                            value={notesValues[analysis.id] || ''}
+                            onChange={(e) => handleNotesChange(analysis.id, e.target.value)}
+                            placeholder="Describe methods actually used..."
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            sx={{ minWidth: 200 }}
+                          />
+                          <Tooltip title="Save notes">
+                            <IconButton
+                              color="primary"
+                              size="small"
+                              onClick={() => handleSaveNotes(analysis.id)}
+                              disabled={savingNotes[analysis.id]}
+                            >
+                              <SaveIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {analysis.user_notes ? (
+                            <>
+                              <Typography variant="body2" sx={{ flex: 1 }}>
+                                {analysis.user_notes}
+                              </Typography>
+                              <Tooltip title="Edit notes">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEditNotes(analysis.id, analysis.user_notes)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          ) : (
+                            <Tooltip title="Add notes">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditNotes(analysis.id, '')}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
                       )}
                     </TableCell>
                   </TableRow>

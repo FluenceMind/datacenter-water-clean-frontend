@@ -36,4 +36,11 @@ export const getAnalysisById = async (id) => {
   return response.data;
 };
 
+export const updateAnalysisNotes = async (id, userNotes) => {
+  const response = await api.patch(`/api/v1/analysis/${id}/notes`, {
+    user_notes: userNotes,
+  });
+  return response.data;
+};
+
 export default api;
