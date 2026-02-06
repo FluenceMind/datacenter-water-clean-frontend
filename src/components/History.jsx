@@ -101,6 +101,7 @@ function History() {
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="center">pH Status</TableCell>
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="center">TDS (mg/L)</TableCell>
                   <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="center">TDS Status</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Recommended Treatment</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -147,6 +148,16 @@ function History() {
                         color={getCategoryColor(analysis.tds_category)}
                         size="small"
                       />
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                          {analysis.treatment_train}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                          {analysis.explanation}
+                        </Typography>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
