@@ -14,11 +14,13 @@ import {
   Chip,
   TablePagination,
   TextField,
+  Button,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import EditIcon from '@mui/icons-material/Edit';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { getAnalysisHistory, updateAnalysisNotes } from '../services/api';
 
 function History() {
@@ -35,6 +37,17 @@ function History() {
   useEffect(() => {
     fetchHistory();
   }, [page, rowsPerPage]);
+
+  useEffect(() => {
+    // Initialize notesValues from analyses
+    const initialNotes = {};
+    analyses.forEach(analysis => {
+      if (analysis.user_notes) {
+        initialNotes[analysis.id] = analysis.user_notes;
+      }
+    });
+    setNotesValues(prev => ({ ...prev, ...initialNotes }));
+  }, [analyses]);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -99,6 +112,13 @@ function History() {
 
   const handleNotesChange = (analysisId, value) => {
     setNotesValues({ ...notesValues, [analysisId]: value });
+  };
+
+  const handleCancelEdit = (analysisId) => {
+    setEditingNotes({ ...editingNotes, [analysisId]: false });
+    // Reset to original value
+    const originalAnalysis = analyses.find(a => a.id === analysisId);
+    setNotesValues({ ...notesValues, [analysisId]: originalAnalysis?.user_notes || '' });
   };
 
   if (loading) {
@@ -207,55 +227,65 @@ function History() {
                     </TableCell>
                     <TableCell>
                       {editingNotes[analysis.id] ? (
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <TextField
                             multiline
-                            rows={2}
+                            rows={3}
                             value={notesValues[analysis.id] || ''}
                             onChange={(e) => handleNotesChange(analysis.id, e.target.value)}
-                            placeholder="Describe methods actually used..."
+                            placeholder="Describe the methods you actually used..."
                             variant="outlined"
                             size="small"
                             fullWidth
-                            sx={{ minWidth: 200 }}
+                            sx={{ minWidth: 250 }}
                           />
-                          <Tooltip title="Save notes">
-                            <IconButton
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                              variant="contained"
                               color="primary"
                               size="small"
+                              startIcon={<SaveIcon />}
                               onClick={() => handleSaveNotes(analysis.id)}
                               disabled={savingNotes[analysis.id]}
                             >
-                              <SaveIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                              {savingNotes[analysis.id] ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<CancelIcon />}
+                              onClick={() => handleCancelEdit(analysis.id)}
+                              disabled={savingNotes[analysis.id]}
+                            >
+                              Cancel
+                            </Button>
+                          </Box>
                         </Box>
                       ) : (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, minHeight: 60 }}>
                           {analysis.user_notes ? (
                             <>
-                              <Typography variant="body2" sx={{ flex: 1 }}>
+                              <Typography variant="body2" sx={{ flex: 1, whiteSpace: 'pre-wrap' }}>
                                 {analysis.user_notes}
                               </Typography>
-                              <Tooltip title="Edit notes">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleEditNotes(analysis.id, analysis.user_notes)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<EditIcon />}
+                                onClick={() => handleEditNotes(analysis.id, analysis.user_notes)}
+                              >
+                                Edit
+                              </Button>
                             </>
                           ) : (
-                            <Tooltip title="Add notes">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handleEditNotes(analysis.id, '')}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<EditIcon />}
+                              onClick={() => handleEditNotes(analysis.id, '')}
+                            >
+                              Add Notes
+                            </Button>
                           )}
                         </Box>
                       )}
